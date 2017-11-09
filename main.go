@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/joeshaw/envdecode"
+	"github.com/rs/cors"
 	"github.com/vallard/spark"
 )
 
@@ -42,7 +43,8 @@ func main() {
 		log.Fatalf("Environment Decode Problem: %v\n", err)
 	}
 	s = spark.New(ev.SparkToken)
-	http.HandleFunc("/v1/feedback", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/feedback", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Got a request:\n  %v\n\n", r)
 		if r.Method == "POST" {
 			decoder := json.NewDecoder(r.Body)
@@ -66,5 +68,6 @@ func main() {
 
 	log.Print("Kubam Feedback is Listening on port 9999")
 	log.Print("call me with: curl -X POST -d '{\"message\" : \"Kubam is awesome.\" }' localhost:9999/v1/feedback ")
-	http.ListenAndServe(":9999", nil)
+	handler := cors.Default().Handler(mux)
+	http.ListenAndServe(":9999", handler)
 }
